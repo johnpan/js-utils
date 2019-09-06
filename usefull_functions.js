@@ -1013,29 +1013,30 @@
 		//console.table(stack);
 		return a;
 	}
-
-	function getDataGroup(objectArray, dataKeys, length=0) {
+	
+	function getDataGroup(objectArray, dataKeys, len=0) {
 		/* take the first {length} objects from incoming data,
-		 * group data by keys and return a single object 
-		 * negative length starts from the end of array
-		 * example: getDataGroup([{a:1.1,b:1.2},{a:2.1,b:2.2}]], ["a","b"])
-		 * returns: {a:[1.1,2.1],b:[2.1,2.2]} */
-		let dataGrouped = {}, len=0, _incoming = objectArray.slice();
+		* group data by keys and return a single object 
+		* negative length takes the last {length} of array. Does NOT reverse
+		* example: getDataGroup([{a:1.1,b:1.2},{a:2.1,b:2.2}]], ["a","b"])
+		* returns: {a:[1.1,2.1],b:[2.1,2.2]} */
+		let dataGrouped = {}, _i=0, _incoming = objectArray.slice();
 		// create empty object by dataKeys
 		dataKeys.map(k => dataGrouped[k]=[]);
-		if (length<0) {
-			length = Math.abs(length);
-			_incoming.reverse();
+		if (len<0) {
+			_incoming = _incoming.slice(len);        
+			len = Math.abs(len);
 		}
 		// fill each array 
 		_incoming.some(d => {
 			dataKeys.map(k => {    
 				dataGrouped[k].push(d[k]);
 			});
-			if (length>0 && ++len>length-1) return true; // break
+			if (len>0 && ++_i>len-1) return true; // break
 		});    
 		return dataGrouped;
 	}
+
 	// expose functions to window
 	window.say = say;
 	window.jp = {
