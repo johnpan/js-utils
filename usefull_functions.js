@@ -990,7 +990,6 @@
 		}
 		elem.style[window.transformProp] = "rotate(" + rotatorDegrees + "deg)";
 	}
-
 	
 	function fibonacci(n) {
 
@@ -1015,6 +1014,28 @@
 		return a;
 	}
 
+	function getDataGroup(objectArray, dataKeys, length=0) {
+		/* take the first {length} objects from incoming data,
+		 * group data by keys and return a single object 
+		 * negative length starts from the end of array
+		 * example: getDataGroup([{a:1.1,b:1.2},{a:2.1,b:2.2}]], ["a","b"])
+		 * returns: {a:[1.1,2.1],b:[2.1,2.2]} */
+		let dataGrouped = {}, len=0, _incoming = objectArray.slice();
+		// create empty object by dataKeys
+		dataKeys.map(k => dataGrouped[k]=[]);
+		if (length<0) {
+			length = Math.abs(length);
+			_incoming.reverse();
+		}
+		// fill each array 
+		_incoming.some(d => {
+			dataKeys.map(k => {    
+				dataGrouped[k].push(d[k]);
+			});
+			if (length>0 && ++len>length-1) return true; // break
+		});    
+		return dataGrouped;
+	}
 	// expose functions to window
 	window.say = say;
 	window.jp = {
@@ -1049,6 +1070,7 @@
         ruleOut,
         removeDuplicates,
 		pathShorten,
+		getDataGroup,
 		
 		isUndefined: function (objName) {
 			try {
@@ -1067,8 +1089,8 @@
 			return typeof(obj) == "object" && !Array.isArray(obj) && obj != null && obj != "" && !(obj instanceof String) ;
 		},
 		
-		// sample: delayPromiser(3000)("data 1").then(console.log)
 		delayPromiser : (delay) => {
+		// sample: delayPromiser(3000)("data 1").then(console.log)
 			return (data) => {
 				var p = new Promise ( (res, rej) => {
 					setTimeout(function () {
