@@ -326,50 +326,6 @@
 		return String(this + attached);
 	}
 
-	String.prototype.attachURLParams = function (paramsObj, overWriteBool) {
-		/* function adds parameters from json paramsObj to url string
-		will work even if param already exists in the string.
-		Overwrites existing params by default
-		USE: var params = {var1:"value1", var2:"value2"}
-		someURL = "http://www.test.com";
-		someURL = someURL.attachURLParams(params);
-		returns: http://www.test.com?var1=value1&var2=value2*/
-		if (overWriteBool !== false)
-			overWriteBool = true;
-		var ind = this.indexOf('?');
-		var buildString = function buildStringFn(mainPart, paramsObject) {
-			var attached = "?";
-			for (var key in paramsObject) {
-				attached += key + "=" + paramsObject[key] + "&";
-			}
-			// remove last "&" and return
-			return String(mainPart + attached).slice(0, -1);
-		}
-
-		if (ind > -1) {
-			var param_array = this.substring(ind + 1).split('&');
-			var oldParamsObj = {},
-			theLength = param_array.length;
-			// keep all existing params in params object
-			for (var i = 0; i < theLength; i++) {
-				var x = param_array[i].toString().split('=');
-				oldParamsObj[x[0]] = x[1];
-			}
-			// add new params to oldObj
-			for (var key in paramsObj) {
-				// skip if already there or not
-				if (oldParamsObj[key] && !overWriteBool)
-					continue;
-				oldParamsObj[key] = paramsObj[key];
-			}
-			// build the string from scratch
-			return buildString(this.slice(0, ind), oldParamsObj);
-		} else {
-			// no params in string, just add all mine
-			return buildString(this, paramsObj);
-		}
-	}
-
 	String.prototype.addCommas = function () {
 		var value = this;
 		value += '';
@@ -626,6 +582,47 @@
 		return "Done: Say";
 		}
 		}*/
+	}
+
+	function attachURLParams (str, paramsObj, overWriteBool=true) {
+		/* function adds parameters from json paramsObj to url string
+		will work even if param already exists in the string.
+		Overwrites existing params by default
+		USE: var params = {var1:"value1", var2:"value2"}
+		someURL = "http://www.test.com";
+		someURL = attachURLParams(someURL, params);
+		returns: http://www.test.com?var1=value1&var2=value2*/
+		let ind = str.indexOf('?');
+		const buildString = (mainPart, paramsObject) => {
+			var attached = "?";
+			for (var key in paramsObject) {
+				attached += key + "=" + paramsObject[key] + "&";
+			}
+			// remove last "&" and return
+			return String(mainPart + attached).slice(0, -1);
+		}
+		if (ind > -1) {
+			var param_array = str.substring(ind + 1).split('&');
+			var oldParamsObj = {},
+			theLength = param_array.length;
+			// keep all existing params in params object
+			for (var i = 0; i < theLength; i++) {
+				var x = param_array[i].toString().split('=');
+				oldParamsObj[x[0]] = x[1];
+			}
+			// add new params to oldObj
+			for (var key in paramsObj) {
+				// skip if already there or not
+				if (oldParamsObj[key] && !overWriteBool)
+					continue;
+				oldParamsObj[key] = paramsObj[key];
+			}
+			// build the string from scratch
+			return buildString(str.slice(0, ind), oldParamsObj);
+		} else {
+			// no params in string, just add all mine
+			return buildString(str, paramsObj);
+		}
 	}
 
 	function urlParamsObj(source) {
@@ -1106,7 +1103,7 @@
 			return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()} ${d.getHours()}:${d.getMinutes()}:${d.getSeconds()}`;
 		},
 
-		replaceObjectInArray = (arr, obj, prop) => {
+		replaceObjectInArray : (arr, obj, prop) => {
 			// replace an object in array using prop as id
 			let replaced = false;
 			arr.forEach( (item, i, _arr) => { 
