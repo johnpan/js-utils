@@ -241,40 +241,30 @@
 			})
 		});
 	}
-
-    function ruleOut(arr, filterObj, exactMatch) {
-        /*
-        returns array without the filtered rows. FilterObj has filter array for all unwanted values for each field
-        example:
-        var unwantedFieldsFilter: {	userName: ['Mary', 'Joe'],	job: ['actor'],	language: ['English', 'Italian', 'Spanish', 'Greek']	};
-        var actors = [{userName:"Mary", job:"star", language:"Turkish"},{userName:"John", job:"actor", language:"Turkish"},{userName:"Takis", job:"star", language:"Greek"},{userName:"Joe", job:"star", language:"Turkish"},{userName:"Bill", job:"star", language:"Turkish"}	];
-        var filteredActors = actors.ruleOut(unwantedFieldsFilter)
-            */
-        exactMatch = !!exactMatch;
-        var validate = function validateFn(row) {
-            //debugger;
-            for (var field in filterObj) {
-                var val = row[field];
-                if (val) {
-                    console.log("compare " + val + " with " + filterObj[field]);
-                    // one of the unwanted properties exist in row item, check the value now
-                    if (exactMatch && filterObj[field].indexOf(val) > -1)
-                    {
-                        // we should rule out this row
-                        return false;					
-                    } 
-                    else if (!exactMatch) {
-                        return filterObj[field].filter(function(filterValue){ 
-                            return (val.indexOf(filterValue)>-1);
-                        }).length == 0;					
-                    }
-                }
-            }
-            return true;
-        };
-        var returnedArray = arr.filter(validate);
-        return returnedArray;
-    }
+    
+	/*
+	returns array without the filtered rows. FilterObj has filter array for all unwanted values for each field
+	example:
+	var unwantedFieldsFilter= {	userName: ['Mary', 'Joe'],	job: ['actor'],	language: ['English', 'Italian', 'Spanish', 'Greek']	};
+	var actors = [{userName:"Mary", job:"star", language:"Turkish"},{userName:"John", job:"actor", language:"Turkish"},{userName:"Takis", job:"star", language:"Greek"},{userName:"Joe", job:"star", language:"Turkish"},{userName:"Bill", job:"star", language:"Turkish"}	];
+	var filteredActors = ruleOut(actors, unwantedFieldsFilter)
+	*/
+	function ruleOut(arr, filterObj, applyAllFilters=true) {    
+		return arr.filter( row => {            
+			for (var field in filterObj) {
+				var val = row[field];
+				if (val) {
+					if (applyAllFilters && filterObj[field].indexOf(val) > -1) return false;					
+					else if (!applyAllFilters) {
+						return filterObj[field].filter(function(filterValue){ 
+							return (val.indexOf(filterValue)>-1);
+						}).length == 0;					
+					}
+				}
+			}
+			return true;
+		});
+	}
 
     function removeDuplicates (collection, keyname) {
         // returns an array of objs with no duplicates in obj.keyname
