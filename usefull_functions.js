@@ -877,8 +877,8 @@
 		}
 	}
 
-	function getSafe(valuePath) {
-		try { return eval(valuePath); } 
+	function getSafe(obj, valuePath) {
+		try { return eval("obj."+valuePath); } 
 		catch (err) { return null; }
 	}
 	
