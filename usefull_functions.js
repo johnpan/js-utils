@@ -1136,3 +1136,74 @@
 	};
 }
 	(window));
+
+
+// easy Storage util
+(function (window, storage, localStore, sessionStore) {  
+    if (storage) {
+        console.log ('storage already loaded');
+        //return; 
+    }
+    if (!localStore && !sessionStore) {
+        console.log ('no storage found in window');
+    }
+    const storage_version = "0.1"; 
+    let itemModel = {
+            belongsTo: "", 
+            key: "",
+            val: ""
+        },
+        storageItems = [],
+        sourceModel = {
+            id: "", 
+            valuesRef: {}
+        },
+        storageSources = []
+    ;
+    const
+    rnd = (digits=4) => {
+        return (Math.random()+"").substr(-digits);
+    },   
+    synopsis = () => {
+        let results = [];
+        storageSources.map( src => { 
+            Object.entries(src.valuesRef).map( arr => { 
+                results.push( 
+                    Object.assign({}, itemModel, {
+                        belongsTo: src.id,
+                        key: arr[0],
+                        val:arr[1]
+                    })
+                )  
+            })
+        });
+        return results; 
+    },
+    addSource = (src, id=rnd(8)) => {
+        if (storageSources[id]) {
+            return false
+        }     
+        if (src) {            
+            storageSources.push( 
+                Object.assign({}, sourceModel, {
+                    id,
+                    valuesRef: src
+                })
+            );
+            return id;
+        }
+        return false
+	};
+	// include window Storages
+    addSource (localStore, "localStorage");
+    addSource (sessionStore, "sessionStorage");    
+    storage = {
+        show: () => console.table(synopsis()),
+		version: () => storage_version,
+		synopsis,
+        addSource,
+		storageItems,
+		storageSources,
+    };
+window.storage = storage;
+})(window, window.storage, localStorage, sessionStorage);
