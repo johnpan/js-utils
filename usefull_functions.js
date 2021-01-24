@@ -121,7 +121,7 @@
 
 	Array.prototype.findObjects = function (prop, val) {
 		// function returns an array with the found object(s) or an empty array
-		// needs optimization. Add a parameter for exact much OR indexOf
+		// needs optimization. Add a parameter for exact match OR indexOf
 		if (!this || !this[0])
 			return [];
 		if (!this[0][prop]) {
@@ -266,6 +266,41 @@
 		});
 	}
 
+	/*
+	returns array of filtered rows. FilterObj has filter array for all wanted values for each field
+	example:
+	var wantedFieldsFilter= {	userName: ['Mary', 'Joe'],	job: ['actor'],	language: ['English', 'Italian', 'Spanish', 'Greek']	};
+	var actors = [{userName:"Mary", job:"star", language:"Turkish"},{userName:"John", job:"actor", language:"Turkish"},{userName:"Takis", job:"star", language:"Greek"},{userName:"Joe", job:"star", language:"Turkish"},{userName:"Bill", job:"star", language:"Turkish"}	];
+	var filteredActors = ruleIn(actors, unwantedFieldsFilter)
+	*/
+	// WIP, NOT READY
+	function ruleIn(arr, filterObj, applyAND=true) {    
+		return arr.filter( row => {        
+			console.log('examine: row:', row);    
+			for (var field in filterObj) {
+				var val = row[field];
+				console.log(' val:', val);
+				if (val) {
+					if (!applyAND && filterObj[field].indexOf(val) > -1) {
+
+						console.log('case1: true');
+						return true;					
+					}
+					else if (applyAND) {
+						c2 = filterObj[field].filter(function(filterValue){ 
+							return (val.indexOf(filterValue)>-1);
+						}).length != 0;
+						
+						console.log('c2: ', c2);
+						return c2;
+					}
+				}
+			}
+			console.log('return false ');
+			return false;
+		});
+	}
+
     function removeDuplicates (collection, keyname) {
         // returns an array of objs with no duplicates in obj.keyname
         var output = [], keys = [];
@@ -280,7 +315,18 @@
     }
 
 	// String functions -----------------------------------------------------------------------
-		
+	
+	replaceAll_unsafe = (what, withWhat, str) => {
+		const reg = new RegExp(what, 'g');
+		return str.replace(reg, withWhat);
+	}
+
+	replaceAll = (what, withWhat, str) => {
+		// escape regexp special characters in search string
+		what = what.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+		return str.replace(new RegExp(what, 'gi'), withWhat);
+	}
+
 	String.prototype.replaceAll = function(searchStr, replaceStr) {
 		var str = this;    
 		// escape regexp special characters in search string
@@ -816,7 +862,7 @@
 			if (!Array.prototype.findObjects) {
 				Array.prototype.findObjects = function (prop, val) {
 					// function returns an array with the found object(s) or an empty array
-					// needs optimization. Add a parameter for exact much OR indexOf
+					// needs optimization. Add a parameter for exact match OR indexOf
 					if (!this || !this[0])
 						return [];
 					if (!this[0][prop]) {
@@ -1130,8 +1176,65 @@
 			return s1==s2;
 		},
 
+		beep : (dataObj) => {
+			var frequency = 1500, type = 'elegant', volume = 1, duration = 350, msg = 'beep';
+			if (dataObj) {
+				var { frequency = 1500, type = 'elegant', volume = 1, duration = 350, msg = 'beep' } = dataObj;
+			}
+			const
+				audioCtx = new (window.AudioContext || window.webkitAudioContext)(),
+				oscillator = audioCtx.createOscillator(),
+				gainNode = audioCtx.createGain(),
+				types = ['sine', 'square', 'sawtooth', 'triangle']
+			;
+			keepInRange = (val, min, max) => {
+				val = val < min ? min : val;
+				val = val > max ? max : val;
+				return val;
+			};
+			// validate
+			frequency = keepInRange(frequency, 40, 6000);
+			volume = keepInRange(volume, 0, 1);
+			duration = keepInRange(duration, 100, 5000);
+			type = type.toLowerCase();
+			type = types.includes(type) ? type : 'elegant';
+			if (type == 'elegant') {
+				const snd = new Audio("data:audio/wav;base64,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qJrx4KOQjahZxWbcZgztj2c49nKmkId44S71j0c8eV9yDK6uPRzx5X18eDvjvQ6yKo9ZSS6l//8elePK/Lf//IInrOF/FvDoADYAGBMGb7FtErm5MXMlmPAJQVgWta7Zx2go+8xJ0UiCb8LHHdftWyLJE0QIAIsI+UbXu67dZMjmgDGCGl1H+vpF4NSDckSIkk7Vd+sxEhBQMRU8j/12UIRhzSaUdQ+rQU5kGeFxm+hb1oh6pWWmv3uvmReDl0UnvtapVaIzo1jZbf/pD6ElLqSX+rUmOQNpJFa/r+sa4e/pBlAABoAAAAA3CUgShLdGIxsY7AUABPRrgCABdDuQ5GC7DqPQCgbbJUAoRSUj+NIEig0YfyWUho1VBBBA//uQZB4ABZx5zfMakeAAAAmwAAAAF5F3P0w9GtAAACfAAAAAwLhMDmAYWMgVEG1U0FIGCBgXBXAtfMH10000EEEEEECUBYln03TTTdNBDZopopYvrTTdNa325mImNg3TTPV9q3pmY0xoO6bv3r00y+IDGid/9aaaZTGMuj9mpu9Mpio1dXrr5HERTZSmqU36A3CumzN/9Robv/Xx4v9ijkSRSNLQhAWumap82WRSBUqXStV/YcS+XVLnSS+WLDroqArFkMEsAS+eWmrUzrO0oEmE40RlMZ5+ODIkAyKAGUwZ3mVKmcamcJnMW26MRPgUw6j+LkhyHGVGYjSUUKNpuJUQoOIAyDvEyG8S5yfK6dhZc0Tx1KI/gviKL6qvvFs1+bWtaz58uUNnryq6kt5RzOCkPWlVqVX2a/EEBUdU1KrXLf40GoiiFXK///qpoiDXrOgqDR38JB0bw7SoL+ZB9o1RCkQjQ2CBYZKd/+VJxZRRZlqSkKiws0WFxUyCwsKiMy7hUVFhIaCrNQsKkTIsLivwKKigsj8XYlwt/WKi2N4d//uQRCSAAjURNIHpMZBGYiaQPSYyAAABLAAAAAAAACWAAAAApUF/Mg+0aohSIRobBAsMlO//Kk4soosy1JSFRYWaLC4qZBYWFRGZdwqKiwkNBVmoWFSJkWFxX4FFRQWR+LsS4W/rFRb/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////VEFHAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAU291bmRib3kuZGUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMjAwNGh0dHA6Ly93d3cuc291bmRib3kuZGUAAAAAAAAAACU=");
+				snd.volume = volume;
+				snd.play();
+				return;
+			}
+			// go play
+			oscillator.connect(gainNode);
+			gainNode.connect(audioCtx.destination);
+			gainNode.gain.value = volume;
+			oscillator.frequency.value = frequency;
+			oscillator.type = type;
+			oscillator.start();
+			setTimeout(() => { oscillator.stop(); }, duration);
+		},
 
-		
+		morse: (dataLine) => {
+			// NEEDS the beep() method
+			const
+				signal = dataLine,
+				durations = { ".": 200, "-": 400, "_": 400, " ": 150 },
+				beepSettings = { frequency: 1500, type: 'square', volume: 1, msg: '' }
+				;
+			playChar = (signal) => {
+				const _sound = signal[0], d = durations[_sound];
+				if (_sound == " ") {
+					setTimeout(() => { playChar(signal.substr(1)) }, d);
+				} else if (d) {
+					beepSettings.duration = d;
+					if (this.apply) { apply('beep', beepSettings) } else { beep(beepSettings) };
+					setTimeout(() => { playChar(signal.substr(1)) }, d);
+				} else if (_sound) {
+					playChar(signal.substr(1));
+				}
+			};
+			playChar(signal);
+		}
 		
 	};
 }
