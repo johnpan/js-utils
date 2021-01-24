@@ -1,7 +1,7 @@
 var utools = {
 
     utils: {
-        version: 0.3, 
+        version: 0.6,
 
         say: (...args) => {
             args.forEach((el) => {
@@ -12,6 +12,24 @@ var utools = {
 
         urlOK: () => {
             return window.location.href.includes("/watch?");
+        },
+
+        beep: () => {
+            var audioCtx = new (window.AudioContext || window.webkitAudioContext)(),
+                oscillator = audioCtx.createOscillator(),
+                gainNode = audioCtx.createGain();
+            oscillator.connect(gainNode); gainNode.connect(audioCtx.destination);
+            gainNode.gain.value = .10;  // volume 0-1
+            oscillator.frequency.value = 696; // frequency 40-6000
+            oscillator.type = 'sine'; // type sine, square, sawtooth, triangle
+            oscillator.start();
+            setTimeout(function () { oscillator.stop(); }, 150); // duration ms
+        },
+
+        getRandomInt(min, max) {
+            min = Math.ceil(min);
+            max = Math.floor(max);
+            return Math.floor(Math.random() * (max - min + 1)) + min;
         },
 
         createClass: (name, rules) => {
@@ -62,8 +80,9 @@ var utools = {
         },
 
         uiPrep: () => {
-            document.querySelector("#interstitial").outerHTML += `<div id="uTools"><button onclick="utools.ytRealRandom.toggle()" id="btn_rr">RealRandom</button> | <button onclick="utools.antiFreezer.toggle()" id="btn_af">AntiFreeze</button> | <button onclick="utools.ytRealRandom.stickToggle()" id="btn_st">Stick</button> | <span id="logs">YouTubeTools ready, ${utools.utils.version}</span></div>`;
+            document.querySelector("#interstitial").outerHTML += `<div id="uTools"><button onclick="utools.ytRealRandom.toggle()" id="btn_rr">RealRandom</button> | <button onclick="utools.antiFreezer.toggle()" id="btn_af">AntiFreeze</button> | <button onclick="utools.ytRealRandom.stickToggle()" id="btn_st">Stick</button> | <button onclick="utools.overlay.show()" id="btn_ov">Dark</button> | <span id="logs">YouTubeTools ready, ${utools.utils.version}</span></div>`;
 
+            utools.overlay.init();
         },
 
         switchOnBtn: (elemId) => {
@@ -71,9 +90,49 @@ var utools = {
         },
 
         switchOffBtn: (elemId) => {
+            // console.log('switchOffBtn ' + elemId, document.querySelector("#" + elemId));
             document.querySelector("#" + elemId).style.backgroundColor = "";
-        }
+        },
 
+        findObjects: (arr, prop, val) => {
+            // function returns an array with the found object(s) or an empty array
+            // needs optimization. Add a parameter for exact match OR indexOf
+            if (!arr || !arr[0])
+                return [];
+            if (!arr[0][prop]) {
+                console.log("no such property");
+                return [];
+            }
+            return arr.filter(function (pairItem) {
+                if (pairItem[prop] == val)
+                    return true;
+                if (String(pairItem[prop]).indexOf(val) > -1)
+                    return true;
+            });
+        },
+    },
+
+    overlay: {
+        ewrap: null, // wrapper elemet
+
+        init: function () {
+            utools.overlay.ewrap = document.createElement("div");
+            utools.overlay.ewrap.id = "owrap";
+            utools.overlay.ewrap.style = "display:none; position:fixed; width:100%; height:100%; top:0; left:0; right:0; bottom:0; background-color:rgba(0, 0, 0, 0.8); z-index:999999999; cursor:po";
+            utools.overlay.ewrap.addEventListener("click", utools.overlay.hide);
+            document.body.appendChild(utools.overlay.ewrap);
+        },
+
+        show: function () {
+            utools.overlay.ewrap.style.display = "block";
+            utools.utils.switchOnBtn('btn_ov');
+        },
+
+        hide: function () {
+            console.log('hey');
+            utools.overlay.ewrap.style.display = "none";
+            utools.utils.switchOffBtn('btn_ov');
+        }
     },
 
     ytRealRandom: {
@@ -96,7 +155,7 @@ var utools = {
             if (utools.ytRealRandom.runs) {
                 utools.ytRealRandom.stop();
                 utools.ytRealRandom.runs = false;
-                utools.utils.switchOnBtn('btn_rr');
+                utools.utils.switchOffBtn('btn_rr');
                 return;
             }
             if (utools.ytRealRandom.start() === true) {
@@ -108,7 +167,7 @@ var utools = {
         stickToggle: () => {
             if (!utools.ytRealRandom.isStuck) {
                 utools.ytRealRandom.isStuck = true;
-                utools.utils.say('song is stick');
+                utools.utils.say('song stick: feature not ready yet');
                 utools.utils.switchOnBtn('btn_st');
                 // todo
                 // stop all timers
@@ -140,19 +199,13 @@ var utools = {
             }
             let customSongListNumbers = utools.utils.evalFromTo(fromToStr);
             // get songs by number, reading the songList
-            utools.ytRealRandom.customSongList = utools.ytRealRandom.songsList.filter( song => {
+            utools.ytRealRandom.customSongList = utools.ytRealRandom.songsList.filter(song => {
                 return customSongListNumbers.includes(song.songNumber);
-            });      
+            });
             utools.utils.say('songs you want: ', utools.ytRealRandom.customSongList);
             utools.ytRealRandom.stop();
             utools.ytRealRandom.clearSongsPlayed();
             utools.ytRealRandom.start();
-        },
-
-        getRandomInt(min, max) {
-            min = Math.ceil(min);
-            max = Math.floor(max);
-            return Math.floor(Math.random() * (max - min + 1)) + min;
         },
 
         stop: () => {
@@ -173,20 +226,19 @@ var utools = {
         chooseAnotherSong: () => {
             // will clear songs-played list if has to     
             let totalSongs = Number(document.querySelector('#publisher-container').innerText.split('/')[1]),
-                customList = utools.ytRealRandom.customSongList; 
-            if ( (utools.ytRealRandom.songsPlayed.length > 0.9 * totalSongs) || 
-                 (customList && utools.ytRealRandom.songsPlayed.length > 0.9 * customList.length) )
-            {
+                customList = utools.ytRealRandom.customSongList;
+            if ((utools.ytRealRandom.songsPlayed.length > 0.9 * totalSongs) ||
+                (customList && utools.ytRealRandom.songsPlayed.length > 0.9 * customList.length)) {
                 utools.ytRealRandom.clearSongsPlayed();
                 utools.utils.say('more than 90% of songs played, reseting array');
             }
             // ensure not played before
             let nextNum = 2; let divFound, nextDivIndex;
             do {
-                nextDivIndex = customList ? 
-                    customList[utools.ytRealRandom.getRandomInt(0, customList.length - 1)].divIndex
-                    : 
-                    utools.ytRealRandom.getRandomInt(0, totalSongs - 1);
+                nextDivIndex = customList ?
+                    customList[utools.utils.getRandomInt(0, customList.length - 1)].divIndex
+                    :
+                    utools.utils.getRandomInt(0, totalSongs - 1);
                 try {
                     divFound = true;
                     let parent = document.querySelectorAll('#byline')[nextDivIndex].parentElement.parentElement.parentElement;
@@ -199,7 +251,7 @@ var utools = {
                 !divFound ||
                 isNaN(nextNum)
             );
-            let nextSong = utools.ytRealRandom.findObjects(utools.ytRealRandom.songsList, 'songNumber', nextNum)[0];
+            let nextSong = utools.utils.findObjects(utools.ytRealRandom.songsList, 'songNumber', nextNum)[0];
             return nextSong;
         },
 
@@ -220,14 +272,14 @@ var utools = {
         },
 
         playSong: (songNumber) => {
-            const songObj = utools.ytRealRandom.findObjects(utools.ytRealRandom.songsList, 'songNumber', songNumber)[0];
+            const songObj = utools.utils.findObjects(utools.ytRealRandom.songsList, 'songNumber', songNumber)[0];
             if (!songObj) return;
             utools.utils.say('playSong: ' + songObj.songNumber + ', ' + songObj.songTitle);
             utools.ytRealRandom.songsPlayed.push(songObj.songNumber);
             // click the song to play
             let songDiv = document.querySelectorAll('#byline')[songObj.divIndex];
             songDiv.click();
-            let coloredDiv = songDiv.parentElement.parentElement.parentElement;            
+            let coloredDiv = songDiv.parentElement.parentElement.parentElement;
             // add a class, to easily find and clear color when reset
             coloredDiv.classList.add("redified");
             // coloredDiv.style.backgroundColor = '#ffa3a2';
@@ -261,23 +313,6 @@ var utools = {
             }
         },
 
-        findObjects: (arr, prop, val) => {
-            // function returns an array with the found object(s) or an empty array
-            // needs optimization. Add a parameter for exact match OR indexOf
-            if (!arr || !arr[0])
-                return [];
-            if (!arr[0][prop]) {
-                console.log("no such property");
-                return [];
-            }
-            return arr.filter(function (pairItem) {
-                if (pairItem[prop] == val)
-                    return true;
-                if (String(pairItem[prop]).indexOf(val) > -1)
-                    return true;
-            });
-        },
-
         start: () => {
             if (!utools.utils.urlOK()) { return utools.utils.say("not proper web page"); }
             // create css
@@ -285,11 +320,14 @@ var utools = {
             // start
             utools.ytRealRandom.updateSongsList();
             console.log('songs list ', utools.ytRealRandom.songsList);
+            if (utools.ytRealRandom.songsList.length == 0) {
+                return utools.utils.say("no playlist found");
+            }
             const firstSongObj = utools.ytRealRandom.chooseAnotherSong();
             utools.ytRealRandom.playSong(firstSongObj.songNumber);
             utools.ytRealRandom.shouldPlayNextIn = firstSongObj.duration;
             utools.ytRealRandom.setCountdown();
-            return true;         
+            return true;
         },
 
     },
@@ -320,14 +358,14 @@ var utools = {
 
         start: () => {
             if (!utools.utils.urlOK()) { return utools.utils.say("not proper web page"); }
-            utools.antiFreezer.beep();
+            utools.utils.beep();
             window.antiFreezerTimer = setInterval(function () {
                 let nodes = document.querySelectorAll("paper-dialog") || [], len = nodes.length;
                 if (len == 0) return;
                 nodes.forEach(dialog => {
                     if (dialog.style.zIndex > 2000) {
                         dialog.querySelector("paper-button").click();
-                        if (utools.antiFreezer.notifyBeep) antiFreezer.beep();
+                        if (utools.antiFreezer.notifyBeep) utools.utils.beep();
                         if (utools.antiFreezer.log) console.log("I have you covered! " + new Date().toLocaleTimeString());
                     }
                 })
@@ -336,19 +374,9 @@ var utools = {
             return true;
         },
 
-        beep: () => {
-            var audioCtx = new (window.AudioContext || window.webkitAudioContext)(),
-                oscillator = audioCtx.createOscillator(),
-                gainNode = audioCtx.createGain();
-            oscillator.connect(gainNode); gainNode.connect(audioCtx.destination);
-            gainNode.gain.value = .10;  // volume 0-1
-            oscillator.frequency.value = 696; // frequency 40-6000
-            oscillator.type = 'sine'; // type sine, square, sawtooth, triangle
-            oscillator.start();
-            setTimeout(function () { oscillator.stop(); }, 150); // duration ms
-        }
+
     }
 
 }
- 
+
 utools.utils.uiPrep(); 
