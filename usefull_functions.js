@@ -732,36 +732,30 @@
 	}
 
 	function jsonAnalyze(obj) {
-		var arr = [];
+		let arr = [];
 		analyzeJson(obj, null, arr);
-		logBeautifiedDotNotation(arr);
-		return arr;
+		return logBeautifiedDotNotation(arr);
 
 		function analyzeJson(obj, parentStr, outArr) {
-			var opt;
+			let opt;
 			if (!outArr) {
 				return "no output array given"
 			}
-			for (var prop in obj) {
+			for (let prop in obj) {
+				opt = parentStr ? parentStr + '.' + prop : prop;
 				if (Array.isArray(obj[prop]) && obj[prop] !== null) {
-					//say(prop + ' is array');
-					var arr = obj[prop];
+					let arr = obj[prop];
 					if ((Array.isArray(arr[0]) || typeof arr[0] == "object") && arr[0] != null) {
-						//say('   ... of obj/arrays')
-						opt = parentStr ? parentStr + '.' + prop : prop;
+						outArr.push(opt + '[]');
 						analyzeJson(arr[0], opt + '[]', outArr);
 					} else {
-						//say('   ... of values')
-						opt = parentStr ? parentStr + '.' + prop : prop;
 						outArr.push(opt + '[]');
 					}
 				} else if (typeof obj[prop] == "object" && obj[prop] !== null) {
-					//say(prop + ' is object');
-					analyzeJson(obj[prop], prop, outArr);
+					outArr.push(opt + '{}');
+					analyzeJson(obj[prop], opt + '{}', outArr);
 				} else {
 					if (obj.hasOwnProperty(prop) && typeof obj[prop] != 'function') {
-						//say(prop + ' is a key');
-						opt = parentStr ? parentStr + '.' + prop : prop;
 						outArr.push(opt);
 					}
 				}
@@ -769,11 +763,14 @@
 		}
 
 		function logBeautifiedDotNotation(arr) {
+			retStr = '';
 			arr.map(function (item) {
-				var dotsAmount = item.split(".").length - 1;
-				var dotsString = Array(dotsAmount + 1).join("    ");
+				let dotsAmount = item.split(".").length - 1;
+				let dotsString = Array(dotsAmount + 1).join('    ');
+				retStr += dotsString + item + '\n';
 				console.log(dotsString + item)
 			});
+			return retStr;
 		}
 	}
 	

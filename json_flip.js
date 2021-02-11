@@ -231,7 +231,7 @@ function flipNGXchartJson (arr) {
 // console.log(isObjectEqual(result2[0], multi_flip[0]));
 // console.log(isObjectEqual(result2[1], multi_flip[1]));
 
-function flipNGXchartJson_savas(arr) {
+function flipNGXchartJson_savas_john(arr) {
     let flippedData = [];
     let mergedStrings = [];
     let arrCopy = cloneSimpleObject(arr);
@@ -270,20 +270,61 @@ function flipNGXchartJson_savas(arr) {
     });
     return flippedData;
 }
-// let result3 = flipNGXchartJson_savas(multi);
+// let result3 = flipNGXchartJson_savas_john(multi);
 // equality fails due to sorted pairs
 // console.log(isObjectEqual(result3[0], multi_flip[0]));
 // console.log(isObjectEqual(result3[1], multi_flip[1]));
 
+function flipNGXchartJson_savas(arr) {
+    let years = new Set();
+    let yearIndexes = {};
+    const results = arr.map(outerItem => {
+        let outerName = outerItem['name'];
+        return outerItem['series'].map(seriesItem => {
+            return [seriesItem['name'], outerName, seriesItem['value']];
+        });
+    }).reduce((previous, rowArrays) => {
+        for (const parts of rowArrays) {
+            let year = parts[0];
+            let seriesObj = {
+                name: parts[1],
+                value: parts[2]
+            };
+            if (!years.has(year)) {
+                years.add(year);
+
+                previous.push(
+                    {
+                        name: year,
+                        series: [seriesObj]
+                    });
+
+                yearIndexes[year] = previous.length - 1;
+            } else {
+                previous[yearIndexes[year]].series.push(seriesObj);
+            }
+        }
+        return previous;
+    }, []);
+    return results;
+}
+// let result4 = flipNGXchartJson_savas(multi);
+// equality fails due to sorted pairs
+// console.log(isObjectEqual(result4[0], multi_flip[0]));
+// console.log(isObjectEqual(result4[1], multi_flip[1]));
+
 let iter = 10000;
 var test1 = performanceTest(flipNGXchartJson_singleRun, multi, iter);
 var test2 = performanceTest(flipNGXchartJson, multi, iter);
-var test3 = performanceTest(flipNGXchartJson_savas, multi, iter);
+var test3 = performanceTest(flipNGXchartJson_savas_john, multi, iter);
+var test4 = performanceTest(flipNGXchartJson_savas, multi, iter);
 //console.log('performanceTest: ', test1, test2, test3);
 console.table(
-    { 'flipNGXchartJson_singleRun': test1,
-      'flipNGXchartJson'          : test2,
-      'flipNGXchartJson_savas'    : test3 }
+    { 'flipNGXchartJson_singleRun' : test1,
+      'flipNGXchartJson'           : test2,
+      'flipNGXchartJson_savas_john': test3,
+      'flipNGXchartJson_savas'     : test4
+    }
 );
 
 function performanceTest(testFunction, data, iterations) {
