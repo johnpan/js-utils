@@ -1,7 +1,7 @@
 var utools = {
 
     utils: {
-        version: 0.6,
+        version: 0.7,
 
         say: (...args) => {
             args.forEach((el) => {
@@ -80,7 +80,7 @@ var utools = {
         },
 
         uiPrep: () => {
-            document.querySelector("#interstitial").outerHTML += `<div id="uTools"><button onclick="utools.ytRealRandom.toggle()" id="btn_rr">RealRandom</button> | <button onclick="utools.antiFreezer.toggle()" id="btn_af">AntiFreeze</button> | <button onclick="utools.ytRealRandom.stickToggle()" id="btn_st">Stick</button> | <button onclick="utools.overlay.show()" id="btn_ov">Dark</button> | <span id="logs">YouTubeTools ready, ${utools.utils.version}</span></div>`;
+            document.querySelector("#interstitial").outerHTML += `<div id="uTools"><button onclick="utools.ytRealRandom.toggle()" id="btn_rr">RealRandom</button> | <button onclick="utools.antiFreezer.toggle()" id="btn_af">AntiFreeze</button> | <button onclick="utools.ytRealRandom.stickToggle()" id="btn_st">Stick</button> | <button onclick="utools.overlay.show()" id="btn_ov">Dark</button> | <button onclick="utools.overlay.autodark()" id="btn_ad">Auto Dark</button> | <span id="logs">YouTubeTools ready, ${utools.utils.version}</span></div>`;
 
             utools.overlay.init();
         },
@@ -120,6 +120,7 @@ var utools = {
             utools.overlay.ewrap.id = "owrap";
             utools.overlay.ewrap.style = "display:none; position:fixed; width:100%; height:100%; top:0; left:0; right:0; bottom:0; background-color:rgba(0, 0, 0, 0.8); z-index:999999999; cursor:po";
             utools.overlay.ewrap.addEventListener("click", utools.overlay.hide);
+            utools.overlay.ewrap.addEventListener("mousemove", utools.overlay.undark);
             document.body.appendChild(utools.overlay.ewrap);
         },
 
@@ -129,15 +130,40 @@ var utools = {
         },
 
         hide: function () {
-            console.log('hey');
             utools.overlay.ewrap.style.display = "none";
             utools.utils.switchOffBtn('btn_ov');
+        },
+
+        autodark: function () {
+            utools.ytRealRandom.isAutodark = !utools.ytRealRandom.isAutodark;
+            if (utools.ytRealRandom.isAutodark) {
+                utools.utils.switchOnBtn('btn_ad');
+                utools.overlay.setAutodark();
+            } else {
+                utools.utils.switchOffBtn('btn_ad');
+                clearTimeout(utools.ytRealRandom.goDarkTimer);
+            }
+        },
+
+        undark: function () {
+            if (utools.ytRealRandom.isAutodark) {
+                utools.overlay.hide();
+                clearTimeout(utools.ytRealRandom.goDarkTimer);
+                utools.overlay.setAutodark();
+            }
+        },
+
+        setAutodark: function () {
+            utools.ytRealRandom.goDarkTimer = setInterval(function () {
+                utools.overlay.show();
+            }, 3 * 1000);
         }
     },
 
     ytRealRandom: {
         runs: false,
         isStuck: false,
+        isAutodark: false,
         songsPlayed: [],
         songClass: {
             divIndex: 0,
@@ -147,6 +173,7 @@ var utools = {
         },
         shouldPlayNextIn: 0,
         goRandomTimer: 0,
+        goDarkTimer: 0,
         watchdogSetter: 0,
         songsList: [],
         customSongList: null,
