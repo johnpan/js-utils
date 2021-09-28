@@ -241,7 +241,80 @@
 			})
 		});
 	}
-    
+
+	function guessGroupsOrder (arr) {
+		arr = arr || [
+			"2-5 secs",
+			"20-60 secs",
+			"5-10 secs",
+			">60 secs",
+			"0",
+			"10-15 secs",
+			"<2 secs",
+			"15-20 secs"
+		];
+		arr.sort(function (x, y) {
+			let firstNum_x = x.split(' ')[0].split('-')[0];
+			if (firstNum_x === '>60') {
+				// this is the last element
+				return 1;
+			}
+			if (firstNum_x === '0') {
+				// this is the first element
+				return -1;
+			}
+			let firstNum_y = y.split(' ')[0].split('-')[0];
+			if (firstNum_y === '>60') {
+				// this is the last element
+				return -1;
+			}
+			if (firstNum_y === '0') {
+				// this is the first element
+				return 1;
+			}
+			if (firstNum_x === '<2') {
+				return -1;
+			}
+			if (firstNum_y === '<2') {
+				return 1;
+			}
+			if (isNumber(firstNum_x) && isNumber(firstNum_y)) {
+				return Number(firstNum_x) > Number(firstNum_y) ? 1 : -1;
+			}
+			console.log('no case: x: ', x, 'y: ', y);
+
+		});
+		return arr;
+	}    
+
+	function isNumber(sample) {
+		return (!isNaN(Number(sample)));
+	}
+
+	function testGuessGroupsOrder() {
+		let correctLine = '0+<2 secs+2-5 secs+5-10 secs+10-15 secs+15-20 secs+20-60 secs+>60 secs';
+		let mixedArr = ['2-5 secs', '20-60 secs', '5-10 secs', '>60 secs', '0', '10-15 secs',
+			'<2 secs', '15-20 secs'
+		];
+		let shuffleArray = function (array) {
+			for (let i = array.length - 1; i > 0; i--) {
+				const j = Math.floor(Math.random() * (i + 1));
+				[array[i], array[j]] = [array[j], array[i]];
+			}
+		};
+		for (let t = 0; t < 100; t++) {
+			shuffleArray(mixedArr);
+			let compStr = guessGroupsOrder(mixedArr).join('+');
+			if (compStr !== correctLine) {
+				console.log('fail');
+				console.log(compStr);
+				console.log(correctLine);
+				console.log("------");
+			}
+		}
+		console.log('test end');
+	}
+
 	/*
 	returns array without the filtered rows. FilterObj has filter array for all unwanted values for each field
 	example:
@@ -1307,3 +1380,4 @@
     };
 window.storage = storage;
 })(window, window.storage, localStorage, sessionStorage);
+

@@ -80,7 +80,7 @@ var utools = {
         },
 
         uiPrep: () => {
-            document.querySelector("#interstitial").outerHTML += `<div id="uTools"><button onclick="utools.ytRealRandom.toggle()" id="btn_rr">RealRandom</button> | <button onclick="utools.antiFreezer.toggle()" id="btn_af">AntiFreeze</button> | <button onclick="utools.ytRealRandom.stickToggle()" id="btn_st">Stick</button> | <button onclick="utools.overlay.show()" id="btn_ov">Dark</button> | <button onclick="utools.overlay.autodark()" id="btn_ad">Auto Dark</button> | <span id="logs">YouTubeTools ready, ${utools.utils.version}</span></div>`;
+            document.querySelector("#interstitial").outerHTML += `<div id="uTools"><button onclick="utools.ytRealRandom.toggle()" id="btn_rr">Random</button> | <button onclick="utools.antiFreezer.toggle()" id="btn_af">AntiFreeze</button> | <button onclick="utools.ytRealRandom.stickToggle()" id="btn_st">Stick</button> | <button onclick="utools.overlay.show()" id="btn_ov">Dark</button> | <button onclick="utools.overlay.autodark()" id="btn_ad">Auto Dark</button> | <span id="logs">YouTubeTools ready, ${utools.utils.version}</span></div>`;
 
             utools.overlay.init();
         },
