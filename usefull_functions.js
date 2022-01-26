@@ -33,6 +33,7 @@
 	}
 
 	function mapColumn(table, which, fn) {
+		const $ = window.$ || jQuery || document.querySelectorAll;
 		if ('function' == typeof fn) {
 			$("#" + table + " td:nth-child(" + which + ")").each(function () {
 				$(this).text(fn($(this).text()));
@@ -804,6 +805,9 @@
 		}
 	}
 
+	/* pretty print of the structure for a given JSON
+		https://stackoverflow.com/questions/4810841/pretty-print-json-using-javascript/66011302#66011302	
+	*/
 	function jsonAnalyze(obj) {
 		let arr = [];
 		analyzeJson(obj, null, arr);
