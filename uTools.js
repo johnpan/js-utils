@@ -1,7 +1,7 @@
 var utools = {
 
     utils: {
-        version: 0.8,
+        version: 0.9,
 
         say: (...args) => {
             args.forEach((el) => {
@@ -387,9 +387,9 @@ var utools = {
             if (!utools.utils.urlOK()) { return utools.utils.say("not proper web page"); }
             utools.utils.beep();
             window.antiFreezerTimer = setInterval(function () {
-                let possibleDialogElems = ["paper-dialog", "tp-yt-paper-dialog"];
-                let possibleBtns = ["paper-button", "tp-yt-paper-button"];
-                let nodes = possibleDialogElems.join() || [], len = nodes.length;
+                //let possibleDialogElems = ["paper-dialog", "tp-yt-paper-dialog"];
+                let possibleBtns = ["#confirm-button button", "paper-button", "tp-yt-paper-button"];
+                let nodes = document.querySelectorAll("tp-yt-paper-dialog") || [], len = nodes.length;
                 if (len == 0) return;
                 nodes.forEach(dialog => {
                     if (dialog.style.zIndex > 2000) {
